@@ -1,15 +1,58 @@
 "use client";
+
 import React, { useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Search, Ticket, ShieldCheck, AlertTriangle, MapPin, CalendarDays, User, MessageCircle, HeartHandshake, CircleDollarSign } from "lucide-react";
+import {
+  Search,
+  Ticket,
+  ShieldCheck,
+  AlertTriangle,
+  MapPin,
+  CalendarDays,
+  MessageCircle,
+  HeartHandshake,
+  CircleDollarSign,
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-const initialPosts = [
+type PostStatus = "거래가능" | "예약중";
+
+type Post = {
+  id: number;
+  title: string;
+  date: string;
+  seat: string;
+  price: number;
+  seller: string;
+  location: string;
+  method: string;
+  detail: string;
+  status: PostStatus;
+};
+
+type FormState = {
+  title: string;
+  date: string;
+  seat: string;
+  price: string;
+  seller: string;
+  location: string;
+  method: string;
+  detail: string;
+};
+
+const initialPosts: Post[] = [
   {
     id: 1,
     title: "4/28 사직 롯데 vs 두산 2연석 양도",
@@ -48,11 +91,22 @@ const initialPosts = [
   },
 ];
 
-const currency = (value) => new Intl.NumberFormat("ko-KR").format(value) + "원";
+const currency = (value: number): string =>
+  new Intl.NumberFormat("ko-KR").format(value) + "원";
 
-function StatCard({ icon: Icon, title, value, sub }) {
+function StatCard({
+  icon: Icon,
+  title,
+  value,
+  sub,
+}: {
+  icon: React.ElementType;
+  title: string;
+  value: string;
+  sub: string;
+}) {
   return (
-    <Card className="rounded-2xl shadow-sm border-0 bg-white/90 backdrop-blur">
+    <Card className="rounded-2xl border-0 bg-white/90 shadow-sm backdrop-blur">
       <CardContent className="p-5">
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -69,40 +123,81 @@ function StatCard({ icon: Icon, title, value, sub }) {
   );
 }
 
-function PostCard({ post, onToggleFavorite }) {
+function PostCard({
+  post,
+  onToggleFavorite,
+}: {
+  post: Post;
+  onToggleFavorite: (id: number) => void;
+}) {
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
-      <Card className="rounded-2xl border-zinc-200 shadow-sm hover:shadow-md transition-shadow">
+      <Card className="rounded-2xl border-zinc-200 shadow-sm transition-shadow hover:shadow-md">
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <CardTitle className="text-lg text-zinc-900">{post.title}</CardTitle>
-                <Badge className={post.status === "거래가능" ? "bg-green-100 text-green-700 hover:bg-green-100" : "bg-amber-100 text-amber-700 hover:bg-amber-100"}>
+              <div className="flex flex-wrap items-center gap-2">
+                <CardTitle className="text-lg text-zinc-900">
+                  {post.title}
+                </CardTitle>
+                <Badge
+                  className={
+                    post.status === "거래가능"
+                      ? "bg-green-100 text-green-700 hover:bg-green-100"
+                      : "bg-amber-100 text-amber-700 hover:bg-amber-100"
+                  }
+                >
                   {post.status}
                 </Badge>
               </div>
               <p className="mt-2 text-sm text-zinc-500">판매자 · {post.seller}</p>
             </div>
-            <Button variant="outline" size="sm" className="rounded-xl" onClick={() => onToggleFavorite(post.id)}>
-              <HeartHandshake className="mr-1 h-4 w-4" /> 관심
+            <Button
+              variant="outline"
+              size="sm"
+              className="rounded-xl"
+              onClick={() => onToggleFavorite(post.id)}
+            >
+              <HeartHandshake className="mr-1 h-4 w-4" />
+              관심
             </Button>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-2 text-sm text-zinc-700 sm:grid-cols-2">
-            <div className="flex items-center gap-2"><CalendarDays className="h-4 w-4 text-zinc-400" /> {post.date}</div>
-            <div className="flex items-center gap-2"><Ticket className="h-4 w-4 text-zinc-400" /> {post.seat}</div>
-            <div className="flex items-center gap-2"><CircleDollarSign className="h-4 w-4 text-zinc-400" /> {currency(post.price)}</div>
-            <div className="flex items-center gap-2"><MapPin className="h-4 w-4 text-zinc-400" /> {post.location}</div>
-            <div className="flex items-center gap-2"><MessageCircle className="h-4 w-4 text-zinc-400" /> {post.method}</div>
+            <div className="flex items-center gap-2">
+              <CalendarDays className="h-4 w-4 text-zinc-400" />
+              {post.date}
+            </div>
+            <div className="flex items-center gap-2">
+              <Ticket className="h-4 w-4 text-zinc-400" />
+              {post.seat}
+            </div>
+            <div className="flex items-center gap-2">
+              <CircleDollarSign className="h-4 w-4 text-zinc-400" />
+              {currency(post.price)}
+            </div>
+            <div className="flex items-center gap-2">
+              <MapPin className="h-4 w-4 text-zinc-400" />
+              {post.location}
+            </div>
+            <div className="flex items-center gap-2">
+              <MessageCircle className="h-4 w-4 text-zinc-400" />
+              {post.method}
+            </div>
           </div>
-          <div className="rounded-xl bg-zinc-50 p-4 text-sm text-zinc-700 leading-relaxed">
+
+          <div className="rounded-xl bg-zinc-50 p-4 text-sm leading-relaxed text-zinc-700">
             {post.detail}
           </div>
+
           <div className="flex gap-2">
-            <Button className="rounded-xl bg-red-600 hover:bg-red-700">문의하기</Button>
-            <Button variant="outline" className="rounded-xl">상세보기</Button>
+            <Button className="rounded-xl bg-red-600 hover:bg-red-700">
+              문의하기
+            </Button>
+            <Button variant="outline" className="rounded-xl">
+              상세보기
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -111,11 +206,11 @@ function PostCard({ post, onToggleFavorite }) {
 }
 
 export default function Naora9LotteTicketSite() {
-  const [posts, setPosts] = useState(initialPosts);
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [favorites, setFavorites] = useState([]);
-  const [form, setForm] = useState({
+  const [posts, setPosts] = useState<Post[]>(initialPosts);
+  const [search, setSearch] = useState<string>("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [favorites, setFavorites] = useState<number[]>([]);
+  const [form, setForm] = useState<FormState>({
     title: "",
     date: "",
     seat: "",
@@ -128,26 +223,45 @@ export default function Naora9LotteTicketSite() {
 
   const filteredPosts = useMemo(() => {
     return posts.filter((post) => {
-      const matchesSearch =
-        post.title.toLowerCase().includes(search.toLowerCase()) ||
-        post.seat.toLowerCase().includes(search.toLowerCase()) ||
-        post.seller.toLowerCase().includes(search.toLowerCase());
+      const keyword = search.toLowerCase();
 
-      const matchesStatus = statusFilter === "all" ? true : post.status === statusFilter;
+      const matchesSearch =
+        post.title.toLowerCase().includes(keyword) ||
+        post.seat.toLowerCase().includes(keyword) ||
+        post.seller.toLowerCase().includes(keyword);
+
+      const matchesStatus =
+        statusFilter === "all" ? true : post.status === statusFilter;
+
       return matchesSearch && matchesStatus;
     });
   }, [posts, search, statusFilter]);
 
   const availableCount = posts.filter((p) => p.status === "거래가능").length;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!form.title || !form.date || !form.seat || !form.price || !form.seller) return;
 
-    const newPost = {
+    if (
+      !form.title ||
+      !form.date ||
+      !form.seat ||
+      !form.price ||
+      !form.seller
+    ) {
+      return;
+    }
+
+    const newPost: Post = {
       id: Date.now(),
-      ...form,
+      title: form.title,
+      date: form.date,
+      seat: form.seat,
       price: Number(form.price),
+      seller: form.seller,
+      location: form.location,
+      method: form.method,
+      detail: form.detail,
       status: "거래가능",
     };
 
@@ -164,29 +278,43 @@ export default function Naora9LotteTicketSite() {
     });
   };
 
-  const handleToggleFavorite = (id) => {
-    setFavorites((prev) => (prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]));
+  const handleToggleFavorite = (id: number) => {
+    setFavorites((prev) =>
+      prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]
+    );
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-red-50 via-white to-zinc-50 text-zinc-900">
       <section className="relative overflow-hidden border-b bg-white/80 backdrop-blur">
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="max-w-3xl">
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="max-w-3xl"
+          >
             <Badge className="mb-4 rounded-full bg-red-100 px-4 py-1 text-red-700 hover:bg-red-100">
               naora9 x 롯데팬 정가양도 플랫폼
             </Badge>
+
             <h1 className="text-4xl font-black tracking-tight sm:text-5xl">
-              나오라구와 함께하는<br />
+              나오라구와 함께하는
+              <br />
               롯데팬 티켓 정가양도 사이트
             </h1>
+
             <p className="mt-5 text-base leading-7 text-zinc-600 sm:text-lg">
               암표 없이, 웃돈 없이, 진짜 롯데팬끼리 안전하게.
               사직으로 가는 한 장의 티켓을 정가로 연결하는 팬 커뮤니티입니다.
             </p>
+
             <div className="mt-8 flex flex-wrap gap-3">
-              <Button className="rounded-2xl bg-red-600 px-6 hover:bg-red-700">양도글 등록하기</Button>
-              <Button variant="outline" className="rounded-2xl px-6">거래 수칙 보기</Button>
+              <Button className="rounded-2xl bg-red-600 px-6 hover:bg-red-700">
+                양도글 등록하기
+              </Button>
+              <Button variant="outline" className="rounded-2xl px-6">
+                거래 수칙 보기
+              </Button>
             </div>
           </motion.div>
         </div>
@@ -194,9 +322,24 @@ export default function Naora9LotteTicketSite() {
 
       <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         <section className="grid gap-4 md:grid-cols-3">
-          <StatCard icon={Ticket} title="현재 등록 티켓" value={`${posts.length}건`} sub="실시간 양도글 기준" />
-          <StatCard icon={ShieldCheck} title="거래 가능" value={`${availableCount}건`} sub="정가 양도 진행 가능" />
-          <StatCard icon={HeartHandshake} title="관심 등록" value={`${favorites.length}건`} sub="내가 찜한 게시글" />
+          <StatCard
+            icon={Ticket}
+            title="현재 등록 티켓"
+            value={`${posts.length}건`}
+            sub="실시간 양도글 기준"
+          />
+          <StatCard
+            icon={ShieldCheck}
+            title="거래 가능"
+            value={`${availableCount}건`}
+            sub="정가 양도 진행 가능"
+          />
+          <StatCard
+            icon={HeartHandshake}
+            title="관심 등록"
+            value={`${favorites.length}건`}
+            sub="내가 찜한 게시글"
+          />
         </section>
 
         <section className="mt-10 grid gap-8 lg:grid-cols-[1.1fr,0.9fr]">
@@ -213,6 +356,7 @@ export default function Naora9LotteTicketSite() {
                       className="rounded-xl pl-9"
                     />
                   </div>
+
                   <Select value={statusFilter} onValueChange={setStatusFilter}>
                     <SelectTrigger className="rounded-xl">
                       <SelectValue placeholder="거래 상태" />
@@ -229,8 +373,13 @@ export default function Naora9LotteTicketSite() {
 
             <div className="space-y-4">
               {filteredPosts.map((post) => (
-                <PostCard key={post.id} post={post} onToggleFavorite={handleToggleFavorite} />
+                <PostCard
+                  key={post.id}
+                  post={post}
+                  onToggleFavorite={handleToggleFavorite}
+                />
               ))}
+
               {filteredPosts.length === 0 && (
                 <Card className="rounded-2xl border-dashed shadow-sm">
                   <CardContent className="flex min-h-[180px] items-center justify-center text-zinc-500">
@@ -251,40 +400,58 @@ export default function Naora9LotteTicketSite() {
                   <Input
                     placeholder="예: 5/5 사직 중앙석 2연석 양도"
                     value={form.title}
-                    onChange={(e) => setForm({ ...form, title: e.target.value })}
+                    onChange={(e) =>
+                      setForm({ ...form, title: e.target.value })
+                    }
                     className="rounded-xl"
                   />
+
                   <div className="grid gap-4 sm:grid-cols-2">
                     <Input
                       type="date"
                       value={form.date}
-                      onChange={(e) => setForm({ ...form, date: e.target.value })}
+                      onChange={(e) =>
+                        setForm({ ...form, date: e.target.value })
+                      }
                       className="rounded-xl"
                     />
                     <Input
                       placeholder="좌석 정보"
                       value={form.seat}
-                      onChange={(e) => setForm({ ...form, seat: e.target.value })}
+                      onChange={(e) =>
+                        setForm({ ...form, seat: e.target.value })
+                      }
                       className="rounded-xl"
                     />
                   </div>
+
                   <div className="grid gap-4 sm:grid-cols-2">
                     <Input
                       type="number"
                       placeholder="정가 금액"
                       value={form.price}
-                      onChange={(e) => setForm({ ...form, price: e.target.value })}
+                      onChange={(e) =>
+                        setForm({ ...form, price: e.target.value })
+                      }
                       className="rounded-xl"
                     />
                     <Input
                       placeholder="판매자 닉네임"
                       value={form.seller}
-                      onChange={(e) => setForm({ ...form, seller: e.target.value })}
+                      onChange={(e) =>
+                        setForm({ ...form, seller: e.target.value })
+                      }
                       className="rounded-xl"
                     />
                   </div>
+
                   <div className="grid gap-4 sm:grid-cols-2">
-                    <Select value={form.location} onValueChange={(value) => setForm({ ...form, location: value })}>
+                    <Select
+                      value={form.location}
+                      onValueChange={(value) =>
+                        setForm({ ...form, location: value })
+                      }
+                    >
                       <SelectTrigger className="rounded-xl">
                         <SelectValue placeholder="장소" />
                       </SelectTrigger>
@@ -293,7 +460,13 @@ export default function Naora9LotteTicketSite() {
                         <SelectItem value="원정경기">원정경기</SelectItem>
                       </SelectContent>
                     </Select>
-                    <Select value={form.method} onValueChange={(value) => setForm({ ...form, method: value })}>
+
+                    <Select
+                      value={form.method}
+                      onValueChange={(value) =>
+                        setForm({ ...form, method: value })
+                      }
+                    >
                       <SelectTrigger className="rounded-xl">
                         <SelectValue placeholder="양도 방식" />
                       </SelectTrigger>
@@ -303,23 +476,31 @@ export default function Naora9LotteTicketSite() {
                       </SelectContent>
                     </Select>
                   </div>
+
                   <Textarea
                     placeholder="거래 안내, 인증 가능 여부, 유의사항 등을 적어주세요"
                     value={form.detail}
-                    onChange={(e) => setForm({ ...form, detail: e.target.value })}
+                    onChange={(e) =>
+                      setForm({ ...form, detail: e.target.value })
+                    }
                     className="min-h-[120px] rounded-xl"
                   />
-                  <Button type="submit" className="w-full rounded-xl bg-red-600 hover:bg-red-700">
+
+                  <Button
+                    type="submit"
+                    className="w-full rounded-xl bg-red-600 hover:bg-red-700"
+                  >
                     등록하기
                   </Button>
                 </form>
               </CardContent>
             </Card>
 
-            <Card className="rounded-2xl shadow-sm border-amber-200 bg-amber-50/60">
+            <Card className="rounded-2xl border-amber-200 bg-amber-50/60 shadow-sm">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-xl text-amber-900">
-                  <AlertTriangle className="h-5 w-5" /> 안전 거래 수칙
+                  <AlertTriangle className="h-5 w-5" />
+                  안전 거래 수칙
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3 text-sm leading-6 text-amber-950">
@@ -335,8 +516,14 @@ export default function Naora9LotteTicketSite() {
                 <CardTitle className="text-xl">운영 방향</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3 text-sm leading-6 text-zinc-700">
-                <p>이 사이트는 나오라구와 롯데팬들이 함께 만드는 팬 중심 정가양도 커뮤니티를 목표로 합니다.</p>
-                <p>추후 기능으로는 본인인증, 신고 시스템, 거래완료 처리, 경기별 필터, 좌석 지도, 관리자 승인 기능을 붙일 수 있습니다.</p>
+                <p>
+                  이 사이트는 나오라구와 롯데팬들이 함께 만드는 팬 중심 정가양도
+                  커뮤니티를 목표로 합니다.
+                </p>
+                <p>
+                  추후 기능으로는 본인인증, 신고 시스템, 거래완료 처리, 경기별
+                  필터, 좌석 지도, 관리자 승인 기능을 붙일 수 있습니다.
+                </p>
               </CardContent>
             </Card>
           </div>
