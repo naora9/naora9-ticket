@@ -192,12 +192,12 @@ function PostCard({
           </div>
 
           <div className="flex gap-2">
-            <Button className="rounded-xl bg-red-600 hover:bg-red-700">
-              문의하기
-            </Button>
-            <Button variant="outline" className="rounded-xl">
-              상세보기
-            </Button>
+           <Button
+  className="rounded-xl bg-red-600 hover:bg-red-700"
+  onClick={() => window.open("https://www.instagram.com/naora9/", "_blank")}
+>
+  인스타 DM 문의
+</Button>
           </div>
         </CardContent>
       </Card>
@@ -309,9 +309,17 @@ export default function Naora9LotteTicketSite() {
             </p>
 
             <div className="mt-8 flex flex-wrap gap-3">
-              <Button className="rounded-2xl bg-red-600 px-6 hover:bg-red-700">
-                양도글 등록하기
-              </Button>
+              <Button
+  className="rounded-2xl bg-red-600 px-6 hover:bg-red-700"
+  onClick={() => {
+    document.getElementById("register-form")?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  }}
+>
+  양도글 등록하기
+</Button>
               <Button variant="outline" className="rounded-2xl px-6">
                 거래 수칙 보기
               </Button>
@@ -344,7 +352,7 @@ export default function Naora9LotteTicketSite() {
 
         <section className="mt-10 grid gap-8 lg:grid-cols-[1.1fr,0.9fr]">
           <div className="space-y-6">
-            <Card className="rounded-2xl shadow-sm">
+            <Card id="register-form" className="rounded-2xl shadow-sm">
               <CardContent className="p-5">
                 <div className="grid gap-3 md:grid-cols-[1fr,180px]">
                   <div className="relative">
