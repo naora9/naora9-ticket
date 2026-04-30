@@ -320,9 +320,18 @@ export default function Naora9LotteTicketSite() {
 >
   양도글 등록하기
 </Button>
-              <Button variant="outline" className="rounded-2xl px-6">
-                거래 수칙 보기
-              </Button>
+               <Button
+  variant="outline"
+  className="rounded-2xl px-6"
+  onClick={() => {
+    document.getElementById("rules-section")?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  }}
+>
+  거래 수칙 보기
+</Button>
             </div>
           </motion.div>
         </div>
@@ -504,7 +513,10 @@ export default function Naora9LotteTicketSite() {
               </CardContent>
             </Card>
 
-            <Card className="rounded-2xl border-amber-200 bg-amber-50/60 shadow-sm">
+            <Card
+  id="rules-section"
+  className="rounded-2xl border-amber-200 bg-amber-50/60 shadow-sm"
+>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-xl text-amber-900">
                   <AlertTriangle className="h-5 w-5" />
@@ -512,9 +524,9 @@ export default function Naora9LotteTicketSite() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3 text-sm leading-6 text-amber-950">
-                <p>• 반드시 정가 기준으로만 양도하세요.</p>
+                <p>• 반드시 수수료 포함 정가로만 양도하세요.</p>
                 <p>• 예매 내역, 좌석 정보, 본인 확인이 가능한 범위에서 인증하세요.</p>
-                <p>• 캡처본 선전송, 과도한 선입금 요구 거래는 피하세요.</p>
+                <p>• 캡처본 선전송, 과도한 선입금 요구 거래는 피하고 티켓 전송으로 양도하세요.</p>
                 <p>• 커뮤니티 외부 유도 및 웃돈 거래 제안은 즉시 신고하세요.</p>
               </CardContent>
             </Card>
