@@ -1,7 +1,20 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
+import { initializeApp, getApps, getApp } from "firebase/app";
+import {
+  addDoc,
+  collection,
+  getFirestore,
+  onSnapshot,
+  orderBy,
+  query,
+  serverTimestamp,
+  updateDoc,
+  doc,
+  Timestamp,
+} from "firebase/firestore";
 import {
   Search,
   Ticket,
@@ -51,7 +64,16 @@ type FormState = {
   method: string;
   detail: string;
 };
-
+const defaultForm: FormState = {
+  title: "",
+  date: "",
+  seat: "",
+  price: "",
+  seller: "",
+  location: "사직야구장",
+  method: "직거래",
+  detail: "",
+};
 const initialPosts: Post[] = [
   {
     id: 1,
@@ -204,7 +226,24 @@ function PostCard({
     </motion.div>
   );
 }
+const firebaseConfig = {
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+};
 
+const hasFirebaseConfig = Object.values(firebaseConfig).every(Boolean);
+
+const app = hasFirebaseConfig
+  ? getApps().length
+    ? getApp()
+    : initializeApp(firebaseConfig)
+  : null;
+
+const db = app ? getFirestore(app) : null;
 export default function Naora9LotteTicketSite() {
   const [posts, setPosts] = useState<Post[]>(initialPosts);
   const [search, setSearch] = useState<string>("");
@@ -212,18 +251,8 @@ export default function Naora9LotteTicketSite() {
   const [favorites, setFavorites] = useState<number[]>([]);
   const [isFormOpen, setIsFormOpen] = useState<boolean>(false);
   const [submitting, setSubmitting] = useState<boolean>(false);
-  const [form, setForm] = useState<FormState>({
-    
-    
-    title: "",
-    date: "",
-    seat: "",
-    price: "",
-    seller: "",
-    location: "사직야구장",
-    method: "직거래",
-    detail: "",
-  });
+  const [error, setError] = useState<string>("");
+  const [form, setForm] = useState<FormState>(defaultForm);
 
   const filteredPosts = useMemo(() => {
     return posts.filter((post) => {
@@ -240,24 +269,60 @@ export default function Naora9LotteTicketSite() {
       return matchesSearch && matchesStatus;
     });
   }, [posts, search, statusFilter]);
+useEffect(() => {
+  if (!db) return;
 
+  const q = query(
+    collection(db, "ticket_posts"),
+    orderBy("createdAt", "desc")
+  );
+
+  const unsubscribe = onSnapshot(q, (snapshot) => {
+    const firebasePosts: Post[] = snapshot.docs.map((docSnap) => {
+      const data = docSnap.data();
+
+      return {
+        id: Number(docSnap.id),
+        title: data.title || "",
+        date: data.date || "",
+        seat: data.seat || "",
+        price: Number(data.price) || 0,
+        seller: data.seller || "",
+        location: data.location || "",
+        method: data.method || "",
+        detail: data.detail || "",
+        status: data.status || "거래가능",
+      };
+    });
+
+    setPosts(firebasePosts);
+  });
+
+  return () => unsubscribe();
+}, []);
   const availableCount = posts.filter((p) => p.status === "거래가능").length;
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  e.preventDefault();
+  setError("");
 
-    if (
-      !form.title ||
-      !form.date ||
-      !form.seat ||
-      !form.price ||
-      !form.seller
-    ) {
-      return;
-    }
+  console.log("등록 시도:", form);
+  console.log("Firebase DB 상태:", db);
 
-    const newPost: Post = {
-      id: Date.now(),
+  if (!db) {
+    setError("Firebase가 연결되지 않았습니다. .env.local 설정을 확인해주세요.");
+    return;
+  }
+
+  if (!form.title || !form.date || !form.seat || !form.price || !form.seller) {
+    setError("제목, 날짜, 좌석, 금액, 닉네임은 꼭 입력해주세요.");
+    return;
+  }
+
+  setSubmitting(true);
+
+  try {
+    await addDoc(collection(db, "ticket_posts"), {
       title: form.title,
       date: form.date,
       seat: form.seat,
@@ -267,20 +332,20 @@ export default function Naora9LotteTicketSite() {
       method: form.method,
       detail: form.detail,
       status: "거래가능",
-    };
-
-    setPosts((prev) => [newPost, ...prev]);
-    setForm({
-      title: "",
-      date: "",
-      seat: "",
-      price: "",
-      seller: "",
-      location: "사직야구장",
-      method: "직거래",
-      detail: "",
+      createdAt: serverTimestamp(),
     });
-  };
+
+    console.log("등록 성공");
+
+    setForm(defaultForm);
+    setIsFormOpen(false);
+  } catch (error) {
+    console.error("등록 실패:", error);
+    setError("등록 중 오류가 발생했습니다. Firestore 권한과 설정을 확인해주세요.");
+  } finally {
+    setSubmitting(false);
+  }
+};
 
   const handleToggleFavorite = (id: number) => {
     setFavorites((prev) =>
@@ -501,7 +566,11 @@ export default function Naora9LotteTicketSite() {
                     }
                     className="min-h-[120px] rounded-xl"
                   />
-
+{error && (
+  <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">
+    {error}
+  </p>
+)}
                   <Button
                     type="submit"
                     className="w-full rounded-xl bg-red-600 hover:bg-red-700"
@@ -563,10 +632,7 @@ export default function Naora9LotteTicketSite() {
 
       <div className="p-6">
         <form
-          onSubmit={async (e) => {
-            await handleSubmit(e);
-            setIsFormOpen(false);
-          }}
+onSubmit={handleSubmit}
           className="space-y-4"
         >
           <Input
@@ -641,7 +707,20 @@ export default function Naora9LotteTicketSite() {
             onChange={(e) => setForm({ ...form, detail: e.target.value })}
             className="min-h-[120px] rounded-xl"
           />
+<Textarea
+  placeholder="거래 안내, 인증 가능 여부, 유의사항 등을 적어주세요"
+  value={form.detail}
+  onChange={(e) => setForm({ ...form, detail: e.target.value })}
+  className="min-h-[120px] rounded-xl"
+/>
 
+{error && (
+  <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">
+    {error}
+  </p>
+)}
+
+<div className="flex gap-2"></div>
           <div className="flex gap-2">
             <Button
               type="button"
