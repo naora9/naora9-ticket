@@ -210,7 +210,11 @@ export default function Naora9LotteTicketSite() {
   const [search, setSearch] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [favorites, setFavorites] = useState<number[]>([]);
+  const [isFormOpen, setIsFormOpen] = useState<boolean>(false);
+  const [submitting, setSubmitting] = useState<boolean>(false);
   const [form, setForm] = useState<FormState>({
+    
+    
     title: "",
     date: "",
     seat: "",
@@ -311,12 +315,7 @@ export default function Naora9LotteTicketSite() {
             <div className="mt-8 flex flex-wrap gap-3">
               <Button
   className="rounded-2xl bg-red-600 px-6 hover:bg-red-700"
-  onClick={() => {
-    document.getElementById("register-form")?.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
-    });
-  }}
+  onClick={() => setIsFormOpen(true)}
 >
   양도글 등록하기
 </Button>
@@ -549,7 +548,122 @@ export default function Naora9LotteTicketSite() {
           </div>
         </section>
       </main>
+{isFormOpen && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+    <div className="w-full max-w-2xl rounded-2xl bg-white shadow-2xl">
+      <div className="flex items-center justify-between border-b px-6 py-4">
+        <h2 className="text-xl font-bold">양도글 등록</h2>
+        <button
+          onClick={() => setIsFormOpen(false)}
+          className="text-2xl leading-none text-zinc-500 hover:text-zinc-800"
+        >
+          ×
+        </button>
+      </div>
 
+      <div className="p-6">
+        <form
+          onSubmit={async (e) => {
+            await handleSubmit(e);
+            setIsFormOpen(false);
+          }}
+          className="space-y-4"
+        >
+          <Input
+            placeholder="예: 5/5 사직 중앙석 2연석 양도"
+            value={form.title}
+            onChange={(e) => setForm({ ...form, title: e.target.value })}
+            className="rounded-xl"
+          />
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Input
+              type="date"
+              value={form.date}
+              onChange={(e) => setForm({ ...form, date: e.target.value })}
+              className="rounded-xl"
+            />
+            <Input
+              placeholder="좌석 정보"
+              value={form.seat}
+              onChange={(e) => setForm({ ...form, seat: e.target.value })}
+              className="rounded-xl"
+            />
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Input
+              type="number"
+              placeholder="정가 금액"
+              value={form.price}
+              onChange={(e) => setForm({ ...form, price: e.target.value })}
+              className="rounded-xl"
+            />
+            <Input
+              placeholder="판매자 닉네임"
+              value={form.seller}
+              onChange={(e) => setForm({ ...form, seller: e.target.value })}
+              className="rounded-xl"
+            />
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Select
+              value={form.location}
+              onValueChange={(value) => setForm({ ...form, location: value })}
+            >
+              <SelectTrigger className="rounded-xl">
+                <SelectValue placeholder="장소" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="사직야구장">사직야구장</SelectItem>
+                <SelectItem value="원정경기">원정경기</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select
+              value={form.method}
+              onValueChange={(value) => setForm({ ...form, method: value })}
+            >
+              <SelectTrigger className="rounded-xl">
+                <SelectValue placeholder="양도 방식" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="직거래">직거래</SelectItem>
+                <SelectItem value="모바일전달">모바일전달</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <Textarea
+            placeholder="거래 안내, 인증 가능 여부, 유의사항 등을 적어주세요"
+            value={form.detail}
+            onChange={(e) => setForm({ ...form, detail: e.target.value })}
+            className="min-h-[120px] rounded-xl"
+          />
+
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full rounded-xl"
+              onClick={() => setIsFormOpen(false)}
+            >
+              닫기
+            </Button>
+<Button
+  type="submit"
+  disabled={submitting}
+  className="w-full rounded-xl bg-red-600 hover:bg-red-700 disabled:opacity-60"
+>
+  {submitting ? "등록 중..." : "등록하기"}
+</Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+)}
       <footer className="border-t bg-white/90">
         <div className="mx-auto max-w-7xl px-4 py-8 text-sm text-zinc-500 sm:px-6 lg:px-8">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
