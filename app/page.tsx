@@ -1,11 +1,19 @@
 "use client";
-
+import {
+  getAuth,
+  GoogleAuthProvider,
+  onAuthStateChanged,
+  signInWithPopup,
+  signOut,
+  User,
+} from "firebase/auth";
 import React, { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { initializeApp, getApps, getApp } from "firebase/app";
 import {
   addDoc,
   collection,
+  deleteDoc,
   getFirestore,
   onSnapshot,
   orderBy,
@@ -41,8 +49,8 @@ import {
 
 type PostStatus = "거래가능" | "예약중";
 
-type Post = {
-  id: number;
+ type Post = {
+  id: string;
   title: string;
   date: string;
   seat: string;
@@ -148,9 +156,13 @@ function StatCard({
 function PostCard({
   post,
   onToggleFavorite,
+  onDelete,
+  isAdmin,
 }: {
   post: Post;
-  onToggleFavorite: (id: number) => void;
+  onToggleFavorite: (id: string) => void;
+ onDelete: (id: string | number) => void;
+  isAdmin: boolean;
 }) {
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
@@ -213,14 +225,24 @@ function PostCard({
             {post.detail}
           </div>
 
-          <div className="flex gap-2">
-           <Button
-  className="rounded-xl bg-red-600 hover:bg-red-700"
-  onClick={() => window.open("https://www.instagram.com/naora9/", "_blank")}
->
-  인스타 DM 문의
-</Button>
-          </div>
+ <div className="flex gap-2">
+  <Button
+    className="rounded-xl bg-red-600 hover:bg-red-700"
+    onClick={() => window.open("https://www.instagram.com/naora9/", "_blank")}
+  >
+    나오라구 DM 문의
+  </Button>
+
+  {isAdmin && (
+    <Button
+      variant="outline"
+      className="rounded-xl border-red-200 text-red-600 hover:bg-red-50"
+      onClick={() => onDelete(post.id)}
+    >
+      삭제
+    </Button>
+  )}
+</div>
         </CardContent>
       </Card>
     </motion.div>
@@ -244,11 +266,28 @@ const app = hasFirebaseConfig
   : null;
 
 const db = app ? getFirestore(app) : null;
+const auth = app ? getAuth(app) : null;
+const ADMIN_UID = "QezUOhUoUbXLNLSkU1RYn0fB0WG3"
 export default function Naora9LotteTicketSite() {
+  const [user, setUser] = useState<User | null>(null);
+  const isAdmin = user?.uid === ADMIN_UID;
+  useEffect(() => {
+  if (!auth) return;
+
+  const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    setUser(currentUser);
+
+    if (currentUser) {
+      console.log("내 관리자 UID:", currentUser.uid);
+    }
+  });
+
+  return () => unsubscribe();
+}, []);
   const [posts, setPosts] = useState<Post[]>(initialPosts);
   const [search, setSearch] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [favorites, setFavorites] = useState<number[]>([]);
+  const [favorites, setFavorites] = useState<string[]>([]);
   const [isFormOpen, setIsFormOpen] = useState<boolean>(false);
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
@@ -282,7 +321,7 @@ useEffect(() => {
       const data = docSnap.data();
 
       return {
-        id: Number(docSnap.id),
+        id: docSnap.id,
         title: data.title || "",
         date: data.date || "",
         seat: data.seat || "",
@@ -346,8 +385,26 @@ useEffect(() => {
     setSubmitting(false);
   }
 };
+const handleDeletePost = async (id: string) => {
+  if (!db) return;
 
-  const handleToggleFavorite = (id: number) => {
+  if (!isAdmin) {
+    alert("관리자만 삭제할 수 있습니다.");
+    return;
+  }
+
+  const ok = confirm("정말 이 양도글을 삭제할까요?");
+  if (!ok) return;
+
+  try {
+   await deleteDoc(doc(db, "ticket_posts", String(id)));
+    alert("삭제되었습니다.");
+  } catch (error) {
+    console.error("삭제 실패:", error);
+    alert("삭제 실패! Firebase 권한을 확인해주세요.");
+  }
+};
+  const handleToggleFavorite = (id: string) => {
     setFavorites((prev) =>
       prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]
     );
@@ -378,6 +435,27 @@ useEffect(() => {
             </p>
 
             <div className="mt-8 flex flex-wrap gap-3">
+              {user ? (
+  <Button
+    variant="outline"
+    className="rounded-2xl px-6"
+    onClick={() => auth && signOut(auth)}
+  >
+    관리자 로그아웃
+  </Button>
+) : (
+  <Button
+    variant="outline"
+    className="rounded-2xl px-6"
+    onClick={async () => {
+      if (!auth) return;
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
+    }}
+  >
+    관리자 로그인
+  </Button>
+)}
               <Button
   className="rounded-2xl bg-red-600 px-6 hover:bg-red-700"
   onClick={() => setIsFormOpen(true)}
@@ -455,10 +533,12 @@ useEffect(() => {
             <div className="space-y-4">
               {filteredPosts.map((post) => (
                 <PostCard
-                  key={post.id}
-                  post={post}
-                  onToggleFavorite={handleToggleFavorite}
-                />
+  key={post.id}
+  post={post}
+  onToggleFavorite={handleToggleFavorite}
+  onDelete={handleDeletePost}
+  isAdmin={isAdmin}
+/>
               ))}
 
               {filteredPosts.length === 0 && (
