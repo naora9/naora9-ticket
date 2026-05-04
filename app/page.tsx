@@ -297,7 +297,7 @@ export default function Naora9LotteTicketSite() {
               naora9 x 롯데팬 정가양도 플랫폼
             </Badge>
 
-            <h1 className="text-4xl font-black tracking-tight sm:text-5xl">
+            <h1 className="text-4xl font-black tracking-tight sm:text-5xl [font-family:var(--font-do-hyeon)]">
               나오라구와 함께하는
               <br />
               롯데팬 티켓 정가양도 사이트
@@ -415,7 +415,7 @@ export default function Naora9LotteTicketSite() {
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <Input
-                    placeholder="예: 5/5 사직 중앙석 2연석 양도"
+                    placeholder="예: 5/5 화요일 사직 내야필드 2연석 양도"
                     value={form.title}
                     onChange={(e) =>
                       setForm({ ...form, title: e.target.value })
@@ -453,7 +453,7 @@ export default function Naora9LotteTicketSite() {
                       className="rounded-xl"
                     />
                     <Input
-                      placeholder="판매자 닉네임"
+                      placeholder="인스타 아이디"
                       value={form.seller}
                       onChange={(e) =>
                         setForm({ ...form, seller: e.target.value })
